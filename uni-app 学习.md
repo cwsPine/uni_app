@@ -8,8 +8,299 @@
 
 ## 修改uni-app内部样式
 
-1.  class  uni-app 原生样式
-2.  class /deep/  uni-app 原生样式
+1. class  uni-app 原生样式
+
+2. ```
+   /* 外层容器 是page  组件不生效 */
+   外层容器 /deep/ 组件 { }
+   
+   外层容器 ::v-deep 组件 { }
+   ```
+
+   
+
+
+
+## H5对齐API（就是让一些h5用不了的api变成可以使用的api）
+
+1. ican-H5Api 对齐部分H5Api
+
+2. 使用：
+
+   ```js
+   /* main.js文件 */
+   
+   
+   // 下载插件  ican-H5Api
+   
+   import "./utils/ican-H5Api/ican-H5Api.js"
+   ```
+
+3.  setClipboardData（设置剪切板） getClipboardData（获取剪切板） saveImageToPhotosAlbum （保存图片到系统相册） 等H5不兼容api同步  达到H5端也可以调用该api
+
+
+
+## H5 与 微信小程序的兼容性问题
+
+1.  `scroll-view`  占据剩余空间
+
+   1. ```html
+      <scroll-view scroll-y="true" class="scrollView">
+          <view class="classifyList">
+              <view class="classifyItem" v-for="(item,index) in 32" :key="index">
+                  <image class="cover" src="/static/logo.png" mode=""></image>
+                  <view class="title">
+                      礼品盒
+                  </view>
+              </view>
+          </view>
+      </scroll-view>
+      
+      
+      h5 设置高度:  height: calc(100vh - 200rpx);
+      weixin 设置高度: height: 0;flex: 1;
+      
+      ```
+
+2. 自定义的 系统提示 样式（弹出框，加载中），微信小程序不支持
+
+   - ```css
+     uni-modal .uni-modal {
+         border-radius: 24rpx;
+     
+         .uni-modal__bd{
+             color: #222222;
+             font-size: 30rpx;
+         }
+     }
+     
+     // placeholder 颜色
+     .uni-input-placeholder{
+         color: #BBBBBB;
+     }
+     ```
+
+     
+
+3. 使用 `scroll-view` 微信小程序可能发生 文字自动换行， 所以添加 `white-space: nowrap;`
+
+   - ```
+     //其实是 flex  scroll布局 ，引起文字自动换行
+     多一部设置 `white-space: nowrap;` 可
+     ```
+
+4. `uni.getLocation`  H5获取不到信息(可能要在Https下才可以，Chrome还可能墙掉) 
+
+5. ios 和 Android previewImage 不兼容
+
+   - 在图片链接加上 `Content-Type：image/jpg`
+
+   - ```js
+     // index 点击放大的图片 在数组的索引值
+     	// imgList 需要放大的图片数组集合
+        function swiper_preview(index, imgList) {
+        	var b = [...imgList]
+        
+        	
+            // 链接拼接 Content-Type=image/jpg   设置文件类型
+        	b.forEach((item, index, arr) => {
+        		arr[index] = `${BASE_IMG_URL}${item}?Content-Type=image/jpg`
+        	})
+        
+        	// console.log(b);
+        
+        	uni.previewImage({
+        		current: index,
+        		urls: b,
+        	})
+       	// return
+        }
+     ```
+
+6.  在input、textarea等focus之后，获取输入框的光标位置。
+
+   - ```js
+     uni.getSelectedTextRange({
+         success: res => {
+             console.log(res.start);
+             console.log(res.end);
+         },
+         complete: (res) => {
+             console.log(res);
+         }
+     })
+     // H5 可以
+     // 微信开发者工具显示undefined   真机测试可以
+     ```
+
+7. 小程序和H5 的高度
+
+   - ```scss
+     若有需要  可以隐藏小程序底部菜单栏（如 弹出框等）height:100vh
+     
+     // 微信小程序： 视口高度 不包含底部菜单栏  顶部导航栏
+     // h5  ：  视口高度  包含底部菜单栏
+     ```
+
+   - 若有需要  可以隐藏小程序底部菜单栏（如 弹出框等）
+
+   
+
+8.  border-image的使用 多用于 聊天窗 气泡
+
+   1. ```scss
+      .feedBack_item_info {
+      	/* border: 26rpx solid transparent; */
+      	border-style:solid;
+      	border-width:26rpx;
+      	/* 分开写是为了兼容iOS */
+      
+          
+          
+          // border-image 生效的前提是有 border
+      	-moz-border-image: url(xx.png) 25 22 18 22 stretch;
+      	
+      	/* Old Firefox */
+      	-webkit-border-image: url(xx.png) 25 22 18 22 stretch;
+      	
+      	/* Safari and Chrome */
+      	-o-border-image: url(xx.png) 25 22 18 22 stretch;
+      	
+      	/* Opera */
+      	border-image: url(xx.png) 25 22 18 22 stretch;
+      	
+      }
+      ```
+
+      
+
+9.  事件修饰符
+
+   1. `.stop`：各平台均支持， 使用时会阻止事件冒泡，在非 H5 端同时也会阻止事件的默认行为
+   2. `.native`：监听原生事件，仅在 H5 平台支持
+   3. `.prevent` 仅在 H5 平台支持
+   4. `.self`：仅在 H5 平台支持
+   5. `.once`：仅在 H5 平台支持
+   6. `.capture`：仅在 H5 平台支持
+   7. `.passive`：仅在 H5 平台支持
+
+   
+
+10.  ios 微信小程序页面拽动情况 （Android不会发生该问题）
+
+    - 在 `page.json `  文件中配置了  `"enablePullDownRefresh": false,`  的情况下，ios页面还是可以下拉
+    - 暂时没有解决的办法，如果非要固定的话，可以采用 `fixed` 定位，让头部组件固定
+
+11.  ios底部适配 安全区域  
+
+     - 底部fixed的元素
+
+     - ```scss
+        padding-bottom: constant(safe-area-inset-bottom); 
+         
+        padding-bottom:env(safe-area-inset-bottom);
+        
+        // calc
+        padding-bottom:calc(15rpx + constant(safe-area-inset-bottom));
+         
+       padding-bottom:calc(15rpx + env(safe-area-inset-bottom));
+       ```
+
+       
+
+12. 微信支付、分享朋友圈等功能
+
+    - 注入 `weixin-js-sdk` 使得在h5下可以使用
+
+      - ```js
+        npm install weixin-js-sdk // 安装
+        var wx = require('weixin-js-sdk'); // 使用
+        import wx from 'weixin-js-sdk' // es6
+        ```
+
+      - 配置微信基本配置
+
+        - 1. ```js
+             initWxConfig () {
+                 that.$api.request.getSignature(options, res => {
+                     if (res.body.status.statusCode == 0) {
+                         var jsSignature = res.body.data;
+                         // 配置微信基本配置
+                         wx.config({
+                             debug: true,
+                             appId: jsSignature.appId,
+                             timestamp: jsSignature.timestamp,
+                             nonceStr: jsSignature.nonceStr,
+                             signature: jsSignature.signature,
+                             jsApiList: ['chooseWXPay']
+                         })
+             
+                         // wx.checkJsApi({
+                         // 	jsApiList: ['chooseWXPay'], // 检查微信支付接口是否可用
+                         // 	success: function(res) {
+                         // 		if (res.checkResult.chooseWXPay) {
+                         // 			alert(res);
+                         // 		}
+                         // 	}
+                         // });
+                         wx.ready(()=>{
+                             // 调用微信支付 (均在此处调用api 包括分享朋友圈等)
+                             // 这里需要的参数都是后台自己调取微信之后提供给前端
+                             wx.chooseWXPay({
+                                 
+                                 timestamp: order.timestamp, 
+                                 // 支付签名时间戳，注意微信jssdk中的所有使用timestamp字段均为小写。但最新版的支付后台生成签名使用的timeStamp字段名需大写其中的S字符
+                                 
+                                 nonceStr: order.nonceStr, 
+                                 // 支付签名随机串，不长于 32 位
+                                 
+                                 package: order.packageStr, 
+                                 // 统一支付接口返回的prepay_id参数值，提交格式如：								prepay_id=\*\*\*）
+                                 
+                                 signType: 'MD5', 
+                                 // 签名方式，默认为'SHA1'，使用新版支付需传入'MD5'
+                                 
+                                 paySign: order.signature, // 支付签名
+                                 
+                                 success: function(res) {
+                                     // uni.redirectTo({
+                                     // 	url: '/pages/money/paySuccess'
+                                     // })
+                                     console.log('成功调用h5微信支付');
+                                 },
+                                 complete: (r) => {
+                                     console.log(r);
+                                 }
+                             });
+                         })
+                     }
+                 });
+             }
+             ```
+
+          
+
+​    
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+   
+
+
+
+
 
 ## uniapp 自定义loading  showTotast 样式
 
@@ -58,6 +349,16 @@
    top: 0;
    z-index: 9;
    ```
+   
+2. 移动端手机 顶部有状态栏（电量那一栏）
+
+   - ```js
+     this.status_bar_height = uni.getSystemInfoSync().statusBarHeight
+     // 可以获取到顶部状态栏 高度
+     // 配合吸顶使用更配噢
+     ```
+
+     
 
 
 
@@ -88,8 +389,6 @@
       font-display: swap;
   }
   ```
-
-  
 
 
 
@@ -172,7 +471,7 @@
                    // 适配吸顶tab高度
                    setOffestTop() {
                        let systemInfo = uni.getSystemInfoSync()
-                       let topPx = systemInfo.statusBarHeight + 44 // 顶部状态栏+沉浸式自定义顶部导航
+                       let topPx = systemInfo.statusBarHeight + 44 // 顶部状态栏+沉浸式自定义						顶部导航
                        this.offsetTop = topPx / (uni.upx2px(topPx) / topPx) // px转rpx
                    },
    
@@ -265,16 +564,11 @@
 
 
 
-## 多个条件多个类样式的切换
+## 多个样式、类的判断
 
 1. ```html
    :class="{'showEdit':navIndex===0, 'add_second':navIndex===1}"
    ```
-
-
-
-
-## style 样式判断
 
 1. ```html
     <i:style="{'color':isBling?'red':'white'}" @click=""></i>
@@ -372,7 +666,35 @@
    },
    ```
 
+
+
+
+## 瀑布流布局
+
+1. ```css
+   /* 瀑布布局 */
+   .second_product_contont {
+   	position: relative;
+   	column-count: 2; /* 规定为两列*/
+   	column-gap: 0; /* 列与列之间的 */
+   	column-fill: balance;
+   	padding: 0 6rpx;
+   }
    
+   .second_product_item {
+   	box-sizing: border-box;
+   	break-inside: avoid;  /* 防止断点 */
+   	width: 350rpx;
+   	margin: 12rpx 14rpx;
+   	border-radius: 4rpx;
+   	display: flex;
+   	flex-direction: column;
+   }
+   ```
+
+   
+
+
 
 
 
@@ -853,7 +1175,7 @@ export default {
         }
     },
     methods: {
-        // 点击地图控件
+        // 点击地图控件  微信小程序才支持
         get_map_point(e) {
             // console.log(e.detail);
             this.lat = e.detail.latitude
@@ -896,6 +1218,7 @@ export default {
 
 ```js
 // npm 命令   下载  npm install vue-jsonp
+// 引入 jq
 // #ifdef H5
 var that = this
 $.ajax({
@@ -923,7 +1246,7 @@ $.ajax({
 // #endif
 ```
 
-#### 4. getLocation() 的调用
+### 4. getLocation() 的调用
 
 ```json
 // app.json  需要先配置
@@ -1075,7 +1398,7 @@ uni.getLocation({
 
 
 
-## 双循环踩坑
+## 双循环踩坑(key不要取同名或者同值)
 
 1. `：key=" "`  的值不要相同
 
@@ -1128,21 +1451,7 @@ uni.getLocation({
      
      
 
-2. `（item,i）in list`  item的名字不能重复都是 `item`
-
-
-
-## 事件修饰符
-
-1. `.stop`：各平台均支持， 使用时会阻止事件冒泡，在非 H5 端同时也会阻止事件的默认行为
-2. `.native`：监听原生事件，仅在 H5 平台支持
-3. `.prevent` 仅在 H5 平台支持
-4. `.self`：仅在 H5 平台支持
-5. `.once`：仅在 H5 平台支持
-6. `.capture`：仅在 H5 平台支持
-7. `.passive`：仅在 H5 平台支持
-
-
+2. `（item,i）in list` 中 item的名字不能重复都是 `item`
 
 
 
@@ -1163,6 +1472,7 @@ uni.getLocation({
    
    // 与onLoad 同级
    onPageScroll(Object) {
+       // Object.scrollTop 则为滚动的高度
        // #ifdef H5
        if (Object.scrollTop >= (this.windowWidth * (700 / 750))) {
            this.CHANGE_SCROLL(true)
@@ -1181,13 +1491,14 @@ uni.getLocation({
    
    },
    ```
-
+```
+   
    
 
 
 ## 从手机选择相片进行上传（文件流上传）
 
-```js
+​```js
 uni.chooseImage({
     count: 1,
     success: (res) => {
@@ -1359,7 +1670,7 @@ uni.chooseImage({
 
 
 
-## 函数封装
+## 一些函数封装
 
 ```js
 // 返回上一级页面函数 （适配H5 微信小程序  小程序等）
@@ -1455,6 +1766,43 @@ function setTime(value) {
 
 
 
+// 时间管理 (今天  明天  后天 周几)
+Vue.filter('setDay', function(value) { //setTime为过滤器名
+	let oldDate = new Date(value.replace(/-/g, '/'));
+	let newDate = new Date();
+	var y = newDate.getFullYear();
+	var m = newDate.getMonth() + 1;
+	var d = newDate.getDate();
+	let today = new Date(y + '/' + m + '/' + d);
+
+	var iday = parseInt(oldDate - today) / 1000 / 60 / 60 / 24;
+
+	let day;
+
+	if (iday < 0) {
+		// day = "已过期"
+		day = value
+	} else if (iday === 0) {
+		day = "今天"
+	} else if (iday === 1) {
+		day = "明天"
+	} else if (iday === 2) {
+		day = "后天"
+	} else {
+		if (oldDate.getDay() == 0) day = "周日";
+		if (oldDate.getDay() == 1) day = "周一";
+		if (oldDate.getDay() == 2) day = "周二";
+		if (oldDate.getDay() == 3) day = "周三";
+		if (oldDate.getDay() == 4) day = "周四";
+		if (oldDate.getDay() == 5) day = "周五";
+		if (oldDate.getDay() == 6) day = "周六";
+	}
+
+	return day;
+});
+
+
+
 // 获取包含参数的完整路径 （微信小程序 H5）
 function getCurrentPageUrlWithArgs() {
 	var pages = getCurrentPages() //获取加载的页面
@@ -1527,11 +1875,43 @@ function time(){
         vcode--
         if (vcode <= 0) {
             clearInterval(timer)
-         	vcode = 60
+            vcode = 60
         }
-    }, 1000)
+   	}, 1000)
+}
+
+//  关键字 高亮
+function ruleTitle() {
+    // titleString 需要改变的 字符串
+    let titleString = this.item.title
+    if (!titleString) {
+        return '';
     }
 
+    if (this.searchValue && this.searchValue.length > 0) {
+        // 匹配关键字正则   找到关键字
+        let replaceReg = new RegExp(this.searchValue, 'g');
+        // 高亮替换v-html值  所有 关键字匹配的字符串  转换成   下面的 text 标签
+        let replaceString = '<text class="search_high_light">' + this.searchValue + '</text>';
+        // search_high_light 高亮的样式  如果直接设置不生效 可以使用  父类 >>> search_high_light {}  进行设置样式 
+        
+        // 开始替换  将正则搜索到的关键字  全部 替换 replaceString
+        titleString = titleString.replace(replaceReg, replaceString);
+    }
+    return titleString;
+}
+
+// 提取富文本中得图片地址
+function getImgSrc(htmlstr) {
+    var imgList = [];
+    htmlstr.replace(/<img [^>]*src=['"]([^'"]+)[^>]*>/g, (match, capture) => {
+        imgList.push(capture);
+    });
+    return imgList;
+},
+
+    
+    
 ```
 
 
@@ -3157,6 +3537,38 @@ formatRichText(html) { //控制小程序中图片大小
 
 
 
+## 微信保存图片到本地
+
+1. ```js
+   // 保存图片
+   async save_img() {
+       // #ifdef MP-WEIXIN
+   
+       // 小程序下载网络路径地址的图片
+       let src = `${this.$baseImgUrl}${this.ecard_qr_code}` // 获取网络图片地址路径
+       //  获取图片信息 返回图片的本地路径
+       src = (await uni.getImageInfo({
+           src
+       }))[1].path
+       // console.log(src);
+       uni.saveImageToPhotosAlbum({
+           // filePath: 图片文件路径，可以是临时文件路径也可以是永久文件路径，不支持网络图片路径
+           filePath: src,
+           success: () => {
+               console.log("执行保存操作");
+               this.$u.toast('保存成功')
+           }
+       })
+   
+   
+       // #endif
+   }
+   ```
+
+   
+
+
+
 
 ## 微信小程序的跳转另一个微信小程序
 
@@ -3177,7 +3589,7 @@ formatRichText(html) { //控制小程序中图片大小
 
 
 
-## 微信注册 JS-SDK
+## 微信内置浏览器注册 JS-SDK
 
 ### 1.引入 js 文件
 
@@ -3417,7 +3829,7 @@ this.getEcard().then(() => {
 
 ## 拉取微信快捷登录
 
-### 1.微信内置浏览器拉取微信登录
+### 1. H5 微信内置浏览器拉取微信登录
 
 ```html
 <button v-if="wx_open == true " class="wx_login_btn" open-type="getUserInfo" @click="wx_login">
@@ -3473,11 +3885,14 @@ wx_login() {
     
     // 调用微信登录api 获取code
     // code 是小程序专有，用户登录凭证。开发者需要在开发者服务器后台，使用 code 换取 openid 和 session_key 等信息
+    
+    // 旧版本
     uni.login({
         provider: 'weixin',
         success: (loginRes) => {
             var code = loginRes.code;
             // 获取用户信息
+            // getUserInfo 已经被废弃了   现在使用 getUserProfile 
             uni.getUserInfo({
                 provider: 'weixin',
                 success: (res) => {
@@ -3493,7 +3908,32 @@ wx_login() {
             });
         }
     });
+	
+    
+    // 新版本  现如今 都使用以下方法
+    uni.getUserProfile({
+        desc:'Wexin', 
+        provider: 'weixin',
+        success: (res) => {
 
+            uni.login({
+                provider: 'weixin',
+                success: (loginRes) => {
+                    // console.log(loginRes);
+                    var code = loginRes.code;
+                    /* 后端接口 encryptedData	String	包括敏感数据在内的完整用户信息的加密数据，详细见加密数据解密算法。
+                               		iv	String	加密算法的初始向量，详细见加密数据解密算法。
+                    		  */
+                    this.wechatMinLogin(code, res.encryptedData, res.iv)
+                }
+            });
+        },
+        fail: (err) => {
+            console.log(err)
+        },
+    });
+    
+    
     // #endif
 
 },
@@ -3747,13 +4187,65 @@ this.$u.throttle(()=>{
 
 
 // 防抖
-this.$u.debounce(this.toNext, 500)
+this.$u.debounce(this.toNext, 1500)
 ```
 
 
 
 
 
+## Ref 使用
+
+### 1. 组件ref
+
+1. 首先要清楚：ref不是响应式的，所有的动态加载的模块更新它都无法相应的变化
+
+2. 调用的组件和 `v-if` 结合使用，且组件的数据是动态的话，那么高度等也是动态的。
+
+3. 因此，需要通过渲染子组件成功后，获取到了动态数据，才能将 ref 值进行使用（传递给父组件）
+
+4. 实例演示:
+
+   1. ```js
+      /* 组件js  */
+      
+      mounted() {
+      		// 给每一个视频 都创建了一个视频控制器对象
+      		this.videoContext = uni.createVideoContext(`dyVideo${this.list.id}`, this) // 创建视频控制器对象
+          	
+      
+      		this.$baseImgUrl = this.$baseImgUrl
+      
+      
+      		 this.$nextTick(() => { //使用nextTick为了保证dom元素都已经渲染完毕 
+      		 	this.$emit('eventGetHeight', this.$el.offsetTop); // 动态的 offsetTop
+      		 })
+      
+      		// #ifdef H5
+      		this.videoTop = this.$el.offsetTop
+           	// this.$el  子组件先渲染等到数据  再传递给父组件
+      		// #endif
+      
+      		uni.getSystemInfo({
+      			success: res => {
+      				this.screenHeight = res.screenHeight
+      			}
+      		});
+      
+      
+      		// #ifdef MP-WEIXIN
+      			const query = uni.createSelectorQuery().in(this)
+      			query.select(`#dyVideo${this.list.id}`).boundingClientRect((res) => {
+      				if (res) {
+      					this.videoTop = res.top // 微信获取 节点信息
+      				}
+      			})
+      			query.exec()
+	   		// #endif
+      
+      ```
+   
+   },
 
 
 
@@ -3788,3 +4280,15 @@ this.$u.debounce(this.toNext, 500)
 
 
 
+
+
+
+# SCSS
+
+## 通过import方式引入scss出现失效问题 (解决)
+
+1. ```html
+   <style lang="scss" src="./index.scss"></style>
+   ```
+
+   
